@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Diagnóstico de Buenas Prácticas de ML</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="app-header hero">
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <span class="badge brand">Auditoría ML</span>
+      <h1>Diagnóstico de Buenas Prácticas de ML</h1>
+      <p class="subtitle">
+        Cuestionario auditable para evaluar el estado de tu pipeline y modelo en producción.
+        Las respuestas (<em>Sí</em>, <em>Parcial</em>, <em>No</em>, <em>N/A</em>) contribuyen a KPIs de forma proporcional.
+        La herramienta cruza resultados para derivar indicadores compuestos (preparación de despliegue, observabilidad, compliance, etc.).
+        Cada pregunta incluye una explicación breve, pensada para público no técnico.
+      </p>
+
+      <div class="hero-cta">
+        <a href="#formSection" class="btn primary">Comenzar evaluación</a>
+        <a href="#resultsSection" class="btn ghost">Ver resultados</a>
+      </div>
+
+      <p class="credits">
+        Desarrollado por Alfonso Cervantes Barragán - 
+        <a href="https://analiticaverde.com/averde/proyectos/" target="_blank" rel="noopener">
+          Portafolio
+        </a>
+      </p>
+    </div>
+
+    <!-- Arte decorativo (ligero, accesible) -->
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 300 220" class="hero-svg">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#8cc3ff" stop-opacity="0.45"/>
+            <stop offset="1" stop-color="#1f6fd6" stop-opacity="0.8"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="40" width="280" height="140" rx="14" fill="url(#g1)"/>
+        <g fill="#ffffff" opacity="0.9">
+          <rect x="20" y="60" width="100" height="10" rx="5"/>
+          <rect x="20" y="80" width="180" height="10" rx="5"/>
+          <rect x="20" y="100" width="220" height="10" rx="5"/>
+          <rect x="20" y="120" width="160" height="10" rx="5"/>
+          <rect x="20" y="140" width="200" height="10" rx="5"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+
+  <main class="container">
+    <!-- KPIs EN VIVO -->
+    <section class="kpis-live card">
+      <h2>Salud (en vivo)</h2>
+
+      <div class="kpis-live-grid">
+        <div class="kpi">
+          <div class="kpi-label">Avance</div>
+          <div id="kpiAvance" class="kpi-value">0%</div>
+          <div class="kpi-sub" id="kpiAvanceSub">0 / 24</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Prep. despliegue</div>
+          <div id="kpiPrep" class="kpi-value">—</div>
+          <div class="kpi-sub">Rollback · Canary · Runbooks</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Observabilidad</div>
+          <div id="kpiObs" class="kpi-value">—</div>
+          <div class="kpi-sub">SLIs · Runbooks</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Compliance</div>
+          <div id="kpiComp" class="kpi-value">—</div>
+          <div class="kpi-sub">Consentimiento · PII</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Score preliminar</div>
+          <div id="kpiScoreLive" class="kpi-value">—</div>
+          <div class="kpi-level" id="kpiNivelLive">—</div>
+        </div>
+      </div>
+
+      <div class="kpis-barras">
+        <div class="kpi"><div class="kpi-label">Gobernanza</div><div id="barGob" class="kpi-bar"></div></div>
+        <div class="kpi"><div class="kpi-label">Datos</div><div id="barDatos" class="kpi-bar"></div></div>
+        <div class="kpi"><div class="kpi-label">Modelo</div><div id="barModelo" class="kpi-bar"></div></div>
+        <div class="kpi"><div class="kpi-label">Operación</div><div id="barOp" class="kpi-bar"></div></div>
+        <div class="kpi"><div class="kpi-label">Valor/FinOps</div><div id="barVal" class="kpi-bar"></div></div>
+        <div class="kpi"><div class="kpi-label">Ética & Seguridad</div><div id="barEtica" class="kpi-bar"></div></div>
+      </div>
+    </section>
+
+    <!-- Introducción y Controles -->
+    <section class="intro card">
+      <h2>Introducción</h2>
+      <p>
+        Evalúa seis dominios: <strong>Gobernanza</strong>, <strong>Datos</strong>, <strong>Modelo</strong>,
+        <strong>Operación</strong>, <strong>Valor/FinOps</strong> y <strong>Ética & Seguridad</strong>.
+        No hay bloqueantes: cada respuesta aporta proporcionalmente a los KPIs.
+      </p>
+      <div class="intro-grid">
+        <div>
+          <h3>Controles</h3>
+          <div class="controls">
+            <label>
+              Dominio
+              <select id="filterDomain">
+                <option value="all">Todos</option>
+              </select>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="onlyMust" />
+              <span>Mostrar solo claves</span>
+            </label>
+            <button id="btnExpand" class="btn ghost">Expandir todo</button>
+            <button id="btnCollapse" class="btn ghost">Colapsar todo</button>
+          </div>
+        </div>
+        <div>
+          <h3>Umbrales de hallazgos</h3>
+          <div class="controls">
+            <label>
+              Débil &lt; %
+              <input id="thLow" type="number" min="0" max="100" value="60" />
+            </label>
+            <label>
+              Sólido ≥ %
+              <input id="thHigh" type="number" min="0" max="100" value="85" />
+            </label>
+            <button id="btnApplyThresholds" class="btn">Aplicar umbrales</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cuestionario -->
+    <section id="formSection" class="card">
+      <h2>Cuestionario</h2>
+      <div id="questions"></div>
+    </section>
+
+    <!-- Resultados finales -->
+    <section id="resultsSection" class="card">
+      <h2>Resultados</h2>
+      <button id="btnCalcular" class="btn primary">Calcular diagnóstico</button>
+      <br>
+
+      <div class="results-grid">
+        <div class="kpis">
+          <div class="kpi">
+            <div class="kpi-label">Score global</div>
+            <div id="kpiScore" class="kpi-value">—</div>
+            <div id="kpiNivel" class="kpi-level">—</div>
+          </div>
+
+          <!-- Barras por dominio -->
+          <div class="kpi"><div class="kpi-label">Gobernanza</div><div id="kpiGob" class="kpi-bar"></div></div>
+          <div class="kpi"><div class="kpi-label">Datos</div><div id="kpiDatos" class="kpi-bar"></div></div>
+          <div class="kpi"><div class="kpi-label">Modelo</div><div id="kpiModelo" class="kpi-bar"></div></div>
+          <div class="kpi"><div class="kpi-label">Operación</div><div id="kpiOp" class="kpi-bar"></div></div>
+          <div class="kpi"><div class="kpi-label">Valor/FinOps</div><div id="kpiVal" class="kpi-bar"></div></div>
+          <div class="kpi"><div class="kpi-label">Ética & Seguridad</div><div id="kpiEtica" class="kpi-bar"></div></div>
+
+          <!-- KPIs cruzados/derivados -->
+          <div class="kpi-group">
+            <h3>KPIs derivados</h3>
+            <div class="kpis-cross-grid">
+              <div class="kpi"><div class="kpi-label">Prep. despliegue</div><div id="kpiPrepFinal" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">Observabilidad</div><div id="kpiObsFinal" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">Compliance</div><div id="kpiCompFinal" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">Experimentación</div><div id="kpiExpFinal" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">Salud de datos</div><div id="kpiDataFinal" class="kpi-value">—</div></div>
+              <div class="kpi"><div class="kpi-label">Seguridad ML</div><div id="kpiSecFinal" class="kpi-value">—</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hallazgos y acciones -->
+        <div class="findings">
+          <h3>Resumen ejecutivo</h3>
+          <ul id="resumenEjecutivo"></ul>
+
+          <h3>Hallazgos por cruce</h3>
+          <ul id="reglas"></ul>
+          <div class="actions">
+            <button id="btnCopyFindings" class="btn">Copiar hallazgos</button>
+          </div>
+
+          <h3>Acciones sugeridas</h3>
+          <ul id="acciones"></ul>
+
+          <h3>Prompt para ChatGPT (reporte ejecutivo)</h3>
+          <textarea id="promptGPT" rows="10" class="prompt-area" placeholder="Calcular diagnóstico para generar el prompt..."></textarea>
+          <div class="actions">
+            <button id="btnCopyPrompt" class="btn">Copiar prompt GPT</button>
+          </div>
+
+          <button id="btnCalcular" class="btn primary">Calcular diagnóstico</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visualizaciones -->
+    <section class="card">
+      <h2>Visualizaciones</h2>
+      <div class="charts-grid">
+        <div class="chart-box">
+          <h3>Madurez por dominio</h3>
+          <canvas id="chartRadarDom" height="220"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>KPIs derivados</h3>
+          <canvas id="chartBarsCross" height="220"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>Distribución de respuestas</h3>
+          <canvas id="chartDoughnutRes" height="220"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Glosario KPIs derivados -->
+    <section class="card">
+      <h2>KPIs derivados: significado y rangos</h2>
+      <div class="kpi-gloss">
+        <div>
+          <h3>Preparación de despliegue</h3>
+          <p>Qué tan lista está la operación para actualizar el modelo sin sobresaltos. Se basa en rollback, canary y runbooks.</p>
+          <ul>
+            <li><strong>&lt; 60%</strong>: Riesgo alto de interrupciones y rollbacks manuales.</li>
+            <li><strong>60–84%</strong>: Base razonable, pero con huecos en procedimientos.</li>
+            <li><strong>≥ 85%</strong>: Despliegues controlados y reversibles.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Observabilidad</h3>
+          <p>Capacidad de ver la salud del sistema y reaccionar rápido. Usa SLIs y runbooks.</p>
+          <ul>
+            <li><strong>&lt; 60%</strong>: Ceguera operativa frecuente.</li>
+            <li><strong>60–84%</strong>: Monitoreo útil pero incompleto.</li>
+            <li><strong>≥ 85%</strong>: Tableros y respuestas consistentes.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Compliance</h3>
+          <p>Respeto a políticas de privacidad y uso de datos (consentimiento y PII).</p>
+          <ul>
+            <li><strong>&lt; 60%</strong>: Riesgo legal y reputacional.</li>
+            <li><strong>60–84%</strong>: Políticas aplicadas parcialmente.</li>
+            <li><strong>≥ 85%</strong>: Prácticas sólidas y auditables.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Experimentación</h3>
+          <p>Madurez para probar cambios (métricas, canary/A-B, calibración).</p>
+          <ul>
+            <li><strong>&lt; 60%</strong>: Cambios con poca evidencia.</li>
+            <li><strong>60–84%</strong>: Validación parcial.</li>
+            <li><strong>≥ 85%</strong>: Decisiones informadas por datos.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Salud de datos</h3>
+          <p>Calidad y estabilidad de los datos en producción (contratos, drift, paridad).</p>
+          <ul>
+            <li><strong>&lt; 60%</strong>: Incidentes de calidad probables.</li>
+            <li><strong>60–84%</strong>: Controles con lagunas.</li>
+            <li><strong>≥ 85%</strong>: Datos confiables y verificables.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Seguridad ML</h3>
+          <p>Protección de secretos y vigilancia de amenazas específicas de IA.</p>
+          <ul>
+            <li><strong>&lt; 60%</strong>: Riesgo de filtración/abuso.</li>
+            <li><strong>60–84%</strong>: Cobertura parcial de riesgos.</li>
+            <li><strong>≥ 85%</strong>: Controles proactivos.</li>
+          </ul>
+        </div>
+        <p class="gloss-note">Los rangos usan los umbrales configurables arriba; puedes ajustarlos y recalcular.</p>
+      </div>
+    </section>
+
+      </main>
+
+  <script src="script.js"></script>
+</body>
+<footer class="site-footer classic" role="contentinfo">
+  <div class="container">
+    <p class="footer-credit">
+      Desarrollado por
+      <a href="https://analiticaverde.com/averde/proyectos/" target="_blank" rel="noopener">
+        Alfonso Cervantes
+      </a>
+    </p>
+
+    <p class="footer-disclaimer">
+      Webapp <strong>HTML + JavaScript</strong> creada con asistencia de <abbr title="Inteligencia Artificial">IA</abbr>
+      para acelerar el desarrollo; la <strong>planificación</strong>, <strong>lógica de diagnóstico</strong>,
+      <strong>diseño de KPIs</strong> y decisiones de <strong>UX/UI</strong> son humanas.
+    </p>
+
+    <p class="footer-meta">© <span id="year"></span> · Diagnóstico ML</p>
+  </div>
+</footer>
+
+<script>
+  // Año dinámico
+  (function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();
+</script>
+
+
+
+</html>
